@@ -749,7 +749,7 @@ body { min-height:100%; height:auto !important; overflow-x:hidden; transform:non
 </section>
 <section class="view" id="collectionView"><button class="back" data-back>← Voltar ao início</button><div class="view-head"><h2>🃏 MINHA COLEÇÃO</h2><span class="count" id="collectionCount">5 / 200 cartas</span></div>
 <div class="collection-hero"><div class="collection-hero-copy"><div class="collection-hero-kicker">✦ SEU ACERVO ELEMENTAL ✦</div><h3>Minha Coleção</h3><p>Descubra criaturas, reúna cópias e prepare suas próximas evoluções.</p><div class="collection-hero-stats"><span>🔥 Fogo</span><span>💧 Água</span><span>🌿 Natureza</span><span>🪨 Terra</span><span>⚡ Elétrico</span></div></div></div>
-<details class="cloud-tools" id="cloudSettings"><summary>☁️ Sincronizar criaturas e artes do Supabase</summary><p class="notice">Use a URL do projeto e a chave pública publishable/anon. A sincronização só lê as criaturas e suas imagens; seu progresso, moedas e coleção local não serão apagados.</p><div class="cloud-fields"><input id="gameProjectUrl" placeholder="https://seu-projeto.supabase.co" value="https://okrsbzzqojhppnkeyygp.supabase.co"><input id="gamePublicKey" placeholder="Chave pública sb_publishable_... ou anon" autocomplete="off"><div class="tools" style="margin:0"><button class="action primary" id="syncCloudBtn" type="button">SINCRONIZAR ARTES</button></div><div class="cloud-status" id="cloudSyncStatus">Ainda não sincronizado nesta sessão.</div></div></details>
+<details class="cloud-tools" id="cloudSettings" hidden><summary>☁️ Sincronizar criaturas e artes do Supabase</summary><p class="notice">Use a URL do projeto e a chave pública publishable/anon. A sincronização só lê as criaturas e suas imagens; seu progresso, moedas e coleção local não serão apagados.</p><div class="cloud-fields"><input id="gameProjectUrl" placeholder="https://seu-projeto.supabase.co" value="https://okrsbzzqojhppnkeyygp.supabase.co"><input id="gamePublicKey" placeholder="Chave pública sb_publishable_... ou anon" autocomplete="off" value="sb_publishable_KGJFVAH75L3piWCixZ9bQA_gNWi5qxn"><div class="tools" style="margin:0"><button class="action primary" id="syncCloudBtn" type="button" style="display:none!important" aria-hidden="true" tabindex="-1">SINCRONIZAR ARTES</button></div><div class="cloud-status" id="cloudSyncStatus">Ainda não sincronizado nesta sessão.</div></div></details>
  <div class="collection-overview" aria-label="Resumo da coleção">
  <div class="collection-overview-card"><span>🃏</span><div><strong id="collectionOwnedStat">0 / 200</strong><small>Cartas na coleção</small></div></div>
  <div class="collection-overview-card"><span>✦</span><div><strong id="collectionUniqueStat">0</strong><small>Criaturas diferentes</small></div></div>
@@ -878,12 +878,10 @@ const starterDefs=[
 ["Pavil","Fogo","🦅","Vento Ardente"],["Brasinha","Fogo","🐺","Faísca Viva"],["Gotinha","Água","🐸","Pingo Protetor"],["Bolha","Água","🐟","Bolha de Pressão"],["Dentinho","Natureza","🐰","Salto Folhoso"],["Polegar","Natureza","🐻","Raiz Firme"],["Patapata","Terra","🦔","Casco Rochoso"],["Toto","Terra","🐶","Patas de Barro"],["Bichano","Elétrico","🐱","Bigodes Elétricos"],["Rua","Elétrico","🐭","Choquinho"]
 ];
 const storageKey="ecoElementosTesteCincoNovosPersonagens_PIUPIU_RISQUINHO_FOLHA_PINGA_PIX_V1";let state;try{let saved=localStorage.getItem(storageKey);if(!saved)saved=localStorage.getItem(storageKey+"_backup");state=JSON.parse(saved||"null")}catch(e){try{state=JSON.parse(localStorage.getItem(storageKey+"_backup")||"null")}catch(e2){state=null}}
-if(!state||!Array.isArray(state.cards)){state={coins:250,streak:0,wins:0,losses:0,draws:0,missionsClaimed:[],cards:[],starterPackPending:true}}
+if(!state||!Array.isArray(state.cards)){state={coins:150,streak:0,wins:0,losses:0,draws:0,missionsClaimed:[],cards:[],starterPackPending:true}}
 state.coinsEarnedFromBattles=state.coinsEarnedFromBattles||0;state.cardsEarnedFromMissions=state.cardsEarnedFromMissions||0;state.streak=state.streak||0;state.wins=state.wins||0;state.commonDeckWins=state.commonDeckWins||0;state.losses=state.losses||0;state.draws=state.draws||0;state.missionsClaimed=state.missionsClaimed||[];state.missionCycles=state.missionCycles||{};state.dailyQuestData=state.dailyQuestData||{date:"",matches:0,wins:0,elements:[]};state.dailyClaimDate=state.dailyClaimDate||"";state.dailyStreak=state.dailyStreak||0;state.eventStartDate=state.eventStartDate||localDateKey();state.eventProgress=state.eventProgress||{};state.eventClaimed=state.eventClaimed||[];state.towerFloor=state.towerFloor||1;state.towerWins=state.towerWins||0;let towerMode=false;let towerResultForUi=false;let nextId=Math.max(0,...state.cards.map(c=>+c.id||0))+1, selectedId=null;
 function save(){try{const raw=JSON.stringify(state);localStorage.setItem(storageKey,raw);localStorage.setItem(storageKey+"_backup",raw);localStorage.setItem(storageKey+"_savedAt",new Date().toISOString())}catch(e){console.error("Falha ao salvar o progresso local",e);alert("Não foi possível salvar o progresso. Verifique o espaço disponível no navegador e evite limpar os dados do site.")}updateStats()}
-/* Crédito inicial de teste: concede 4.000 moedas uma única vez neste arquivo, preservando os gastos posteriores. */
-const testCoinsGrantKey=storageKey+"_grant4000_v1";
-try{if(localStorage.getItem(testCoinsGrantKey)!=="done"){state.coins=4000;localStorage.setItem(testCoinsGrantKey,"done");save()}}catch(e){console.warn("Armazenamento local indisponível; o jogo seguirá em modo de sessão.",e);if(!Number.isFinite(state.coins))state.coins=4000}
+/* Saldo inicial padrão: 150 moedas. O saldo salvo dos jogadores existentes é preservado. */
 function updateHomeDashboard(){
  const put=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=String(value)};
  if(!state)return;ensureProfile();const info=levelInfo(state.profile.xp||0);put("homeProfileName",state.profile.name||"Treinador Elemental");put("homeProfileLevel",`Nível ${info.level}`);put("homeXpText",`${info.current} / ${info.needed} XP`);put("homeNextLevel",`Faltam ${info.needed-info.current} XP`);const fill=document.getElementById("homeXpFill");if(fill)fill.style.width=Math.round(info.current/info.needed*100)+"%";
@@ -1035,7 +1033,7 @@ async function syncCloudCreatures(){
  const url=document.getElementById("gameProjectUrl").value.trim().replace(/\/+$/,""),key=document.getElementById("gamePublicKey").value.trim();
  if(!/^https:\/\/.+\.supabase\.co$/.test(url)||!key){statusEl.textContent="Informe a URL do projeto e a chave pública publishable/anon.";return;}
  if(!window.supabase?.createClient){statusEl.textContent="A biblioteca do Supabase não carregou. Verifique a conexão com a internet e abra novamente o jogo.";return;}
- btn.disabled=true;statusEl.textContent="Buscando criaturas e preparando URLs temporárias das imagens...";
+ btn.disabled=true;statusEl.textContent="Buscando criaturas e preparando URLs públicas permanentes das imagens...";
  try{
   localStorage.setItem(gameCloudConfigKey,JSON.stringify({url,key}));
   const client=window.supabase.createClient(url,key);
@@ -1054,19 +1052,21 @@ async function syncCloudCreatures(){
   if(!data?.length)throw new Error("A consulta não retornou criaturas ativas. Verifique a política SELECT da tabela public.criaturas.");
   const normalizeName=name=>String(name||"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR");
   const byName=new Map(); const problems=[];
-  for(const c of data){let imageUrl="";if(c.imagem_url){const signed=await client.storage.from("Criaturas").createSignedUrl(c.imagem_url,3600);if(signed.error)problems.push(c.nome+": "+signed.error.message);else imageUrl=signed.data?.signedUrl||"";}byName.set(normalizeName(c.nome),{...c,imageUrl});}
+  for(const c of data){let imageUrl="";if(c.imagem_url){const publicResult=client.storage.from("Criaturas").getPublicUrl(c.imagem_url);imageUrl=publicResult?.data?.publicUrl||"";if(!imageUrl)problems.push(c.nome+": não foi possível montar a URL pública da imagem");}byName.set(normalizeName(c.nome),{...c,imageUrl});}
   let updated=0;
   const apply=(obj,name)=>{const cloud=byName.get(normalizeName(name));if(!cloud)return;obj.imageUrl=cloud.imageUrl||obj.imageUrl||"";obj.element=cloud.elemento||obj.element;obj.rarity=cloud.raridade||obj.rarity;obj.stage=Number(cloud.estagio||obj.stage||1);obj.force=Number(cloud.forca??obj.force);obj.ability=cloud.habilidade_nome||obj.ability;obj.description=cloud.habilidade_descricao||obj.description;updated++;};
   state.cards.forEach(c=>apply(c,c.name));shopCatalog.forEach(d=>{const cloud=byName.get(normalizeName(d[0]));if(cloud){d.imageUrl=cloud.imageUrl||"";d[1]=cloud.elemento||d[1];d[3]=cloud.habilidade_nome||d[3];d[4]=Number(cloud.estagio||d[4]);d[5]=Number(cloud.forca??d[5]);}});
   // Cachear dados da nuvem para aplicar imagens a cartas recebidas futuramente sem mexer no saldo/progresso.
   state.cloudCreatures=Object.fromEntries([...byName.entries()].map(([name,c])=>[name,{...c}]));
   save();renderCards();renderShopCarousel();renderBattleSelection();
-  statusEl.textContent=`Login anônimo confirmado (${anonymousSession.user.id.slice(0,8)}…).\nSincronização concluída: ${data.length} criaturas ativas consultadas; ${updated} carta(s) da sua coleção atualizadas. URLs de imagem válidas por até 1 hora.${problems.length?"\nProblemas nas imagens:\n• "+problems.join("\n• "):""}`;
+  statusEl.textContent=`Login anônimo confirmado (${anonymousSession.user.id.slice(0,8)}…).\nSincronização concluída: ${data.length} criaturas ativas consultadas; ${updated} carta(s) da sua coleção atualizadas. URLs públicas permanentes das imagens.${problems.length?"\nProblemas nas imagens:\n• "+problems.join("\n• "):""}`;
  }catch(e){statusEl.textContent="Falha na sincronização: "+(e?.message||String(e))+"\nSe a tabela carregar no painel administrativo, mas falhar aqui, pode faltar uma política SELECT para usuários anon ou permissão de leitura no bucket Criaturas.";}
  finally{btn.disabled=false;}
 }
 document.getElementById("syncCloudBtn")?.addEventListener("click",syncCloudCreatures);
-try{const cfg=JSON.parse(localStorage.getItem(gameCloudConfigKey)||"null");if(cfg){document.getElementById("gameProjectUrl").value=cfg.url||"https://okrsbzzqojhppnkeyygp.supabase.co";document.getElementById("gamePublicKey").value=cfg.key||"";}}catch{}
+try{const cfg=JSON.parse(localStorage.getItem(gameCloudConfigKey)||"null");if(cfg){document.getElementById("gameProjectUrl").value=cfg.url||"https://okrsbzzqojhppnkeyygp.supabase.co";document.getElementById("gamePublicKey").value=cfg.key||document.getElementById("gamePublicKey").value||"sb_publishable_KGJFVAH75L3piWCixZ9bQA_gNWi5qxn";}}catch{}
+// Sincroniza automaticamente as criaturas e artes quando o jogo termina de carregar.
+window.addEventListener("load",()=>{setTimeout(()=>{if(document.getElementById("gamePublicKey")?.value.trim())syncCloudCreatures();},1200);},{once:true});
 function normCreatureName(v){return String(v||"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR")}
 function findEvolutionLine(name, rarity, cardStage){
  const norm=normCreatureName(name);
