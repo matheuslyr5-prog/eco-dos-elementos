@@ -720,6 +720,74 @@ body { min-height:100%; height:auto !important; overflow-x:hidden; transform:non
   .modal-bg, .card-preview-overlay, #towerBossReveal, .pack-opening-bg, #starterWelcomeOverlay { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 }
 
+
+/* RESTAURAÇÃO DA TORRE: tema monocromático aplicado somente durante batalhas da Torre. */
+#battleView.tower-battle-mode .score-player,
+#battleView.tower-battle-mode .score-player.enemy {
+  border-color:#777b85 !important;
+  background:linear-gradient(135deg,#25272d,#101115) !important;
+  color:#f3f4f6 !important;
+}
+#battleView.tower-battle-mode .avatar {
+  border-color:#c4c7ce !important;
+  filter:grayscale(1);
+}
+#battleView.tower-battle-mode .round-chip {
+  border-color:#777b85 !important;
+  background:linear-gradient(160deg,#292b31,#111216) !important;
+  color:#e5e7eb !important;
+}
+#battleView.tower-battle-mode .arena-panel {
+  border-color:#686b74 !important;
+  background:radial-gradient(ellipse at 50% 42%,#292b31 0,#17181d 52%,#0b0c0f 100%) !important;
+}
+#battleView.tower-battle-mode .arena-heading { color:#f3f4f6 !important; }
+#battleView.tower-battle-mode .terrain-pill {
+  border-color:#62656d !important;
+  background:#17181d !important;
+  color:#e5e7eb !important;
+}
+#battleView.tower-battle-mode .duel-card,
+#battleView.tower-battle-mode .duel-card.enemy-card {
+  border-color:#aeb2bb !important;
+  background:radial-gradient(circle at 50% 42%,#3b3d44,#111216 75%) !important;
+  box-shadow:0 0 14px #ffffff0a !important;
+}
+#battleView.tower-battle-mode .vs-mark { color:#f3f4f6 !important; }
+#battleView.tower-battle-mode .mystery-terrain {
+  border-color:#555963 !important;
+  background:linear-gradient(100deg,#25272d,#111216) !important;
+}
+#battleView.tower-battle-mode .terrain-die {
+  border:1px solid #555963 !important;
+  background:#202228 !important;
+}
+#battleView.tower-battle-mode .battle-prompt { color:#f0f1f4 !important; }
+#battleView.tower-battle-mode .battle-start,
+#battleView.tower-battle-mode #nextRound {
+  border-color:#f1f2f4 !important;
+  background:linear-gradient(135deg,#e9eaed,#a9adb6) !important;
+  color:#111216 !important;
+}
+#battleView.tower-battle-mode .hand-panel {
+  border-color:#555963 !important;
+  background:linear-gradient(145deg,#202228,#111216) !important;
+}
+#battleView.tower-battle-mode .hand-card {
+  border-color:#555963 !important;
+  background:linear-gradient(155deg,#292b31,#111216) !important;
+}
+#battleView.tower-battle-mode .hand-card .hand-force { color:#f3f4f6 !important; }
+#battleView.tower-battle-mode .hand-play {
+  border-color:#777b85 !important;
+  background:#25272d !important;
+  color:#f3f4f6 !important;
+}
+#battleView.tower-battle-mode .battle-result {
+  border-color:#555963 !important;
+  background:linear-gradient(145deg,#202228,#111216) !important;
+}
+
 </style></head><body><canvas id="ambientParticles" aria-hidden="true" style="display:none!important"></canvas><main class="app">
 <header class="topbar"><div class="emblem">🛡️</div><div class="brand"><h1>ECO DOS ELEMENTOS</h1><p>DOMINE OS ELEMENTOS</p></div><div class="emblem">⚔️</div><button type="button" class="sound-toggle" id="soundToggle" aria-pressed="true" aria-label="Desligar efeitos sonoros">🔊 Sons: ligados</button></header>
 <div class="stats"><div class="pill">🪙 Moedas: <strong id="coins">4000</strong></div><div class="pill">⭐ Nível: <strong>01</strong></div><div class="pill">🃏 Cartas: <strong id="cardCount">5</strong>/100</div></div>
@@ -1210,7 +1278,7 @@ function launchTowerFight(){
  const chosen=savedKeys.map(k=>unique.get(k)).filter(Boolean);
  if(chosen.length!==5){showModal("Defina seu deck da Torre","Antes de começar, abra DECK DE BATALHA e salve cinco criaturas diferentes. Seu deck será usado nos próximos andares.");document.getElementById("towerDeckPanel").hidden=false;renderTowerDeck();return}
  if(chosen.length!==5||towerEnemyTeam.length!==5){showModal("Equipe incompleta","Não foi possível montar as duas equipes com cinco criaturas diferentes. Confira sua coleção e tente novamente.");return}
- towerMode=true;selectedBattleIds=chosen.map(c=>c.id);document.getElementById("battleView").classList.remove("deck-building");
+ towerMode=true;selectedBattleIds=chosen.map(c=>c.id);const towerBattleView=document.getElementById("battleView");towerBattleView.classList.add("tower-battle-mode");const towerArenaHeading=towerBattleView.querySelector(".arena-heading");if(towerArenaHeading)towerArenaHeading.textContent=`♜ TORRE ELEMENTAL · ANDAR ${String(floor).padStart(2,"0")}`;towerBattleView.classList.remove("deck-building");
  battle={round:1,playerScore:0,enemyScore:0,used:[],hands:chosen,enemyTeam:towerEnemyTeam.slice(0,5),results:[],terrain:null,played:false};
  document.getElementById("battleIntro").style.display="none";document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";
  document.getElementById("battlePrompt").textContent=`Andar ${floor}: equipe salva da Torre. Escolha uma criatura para a primeira rodada.`;
@@ -1292,7 +1360,7 @@ function beginBattle(){
  document.getElementById("battleIntro").style.display="none";document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";document.getElementById("battlePrompt").textContent="Escolha uma criatura para jogar a primeira rodada. O elemento e o terreno podem mudar o resultado.";renderBattle();
 }
 function renderDuelCard(id,card,hidden=false){const el=document.getElementById(id);el.classList.remove("face-down","reveal-flip");if(hidden||!card){el.classList.add("face-down");el.innerHTML=`<div class="duel-art"></div><div class="duel-name"></div><div class="duel-meta"></div>`;return}el.innerHTML=`<div class="duel-art">${artMarkup(card)}</div><div class="duel-name"></div><div class="duel-meta">${card.element} · ${card.rarity}</div>`;el.querySelector(".duel-name").textContent=card.name.toUpperCase();}
-function renderBattle(){if(!battle)return;/* Corrige a Torre e as revanche: restaura a arena após a tela de resultado, que pode deixar elementos ocultos com estilos inline. */const arena=document.querySelector("#battleView .arena-panel");if(arena)arena.style.display="";const duel=document.querySelector("#battleView .duel-cards");if(duel)duel.style.display="";const terrain=document.querySelector("#battleView .mystery-terrain");if(terrain)terrain.style.display="";const badge=document.getElementById("terrainBadge");if(badge)badge.style.display="";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";const prompt=document.getElementById("battlePrompt");if(prompt)prompt.style.display="";const rr=document.getElementById("roundResult");if(rr){rr.classList.remove("final-result","final-win","final-loss","final-draw");rr.style.display="none";}const t=terrains[Math.floor(Math.random()*terrains.length)];battle.terrain=t;document.getElementById("roundTitle").textContent=`${battle.round}/5`;document.getElementById("terrainBadge").textContent="🎲 TERRENO SORTEADO AUTOMATICAMENTE";document.getElementById("terrainName").textContent="Terreno misterioso";document.getElementById("terrainText").textContent="O terreno será revelado quando você batalhar.";document.getElementById("terrainIcon").textContent="🎲";document.getElementById("playerScore").textContent=battle.playerScore;document.getElementById("enemyScore").textContent=battle.enemyScore;renderDuelCard("playerDuelCard",null,true);renderDuelCard("enemyDuelCard",null,true);const grid=document.getElementById("battleCards");grid.innerHTML="";const available=battle.hands.filter(c=>!battle.used.includes(c.id));available.forEach(c=>{const b=document.createElement("div");b.className="hand-card";b.innerHTML=`<span class="hand-art">${artMarkup(c)}</span><span class="hand-name"></span><span class="hand-force">⚡ ${c.force}</span><button type="button" class="hand-play">JOGAR CARTA</button>`;b.querySelector(".hand-name").textContent=c.name;const play=b.querySelector(".hand-play");play.disabled=!!battle.played;play.addEventListener("click",()=>playRound(c));b.addEventListener("click",e=>{if(e.target===b||e.target.classList.contains("hand-art")||e.target.closest(".hand-art")||e.target.classList.contains("hand-name"))showBattleCardInfo(c)});grid.appendChild(b)});if(!available.length)grid.innerHTML='<div style="grid-column:1/-1;color:#aab7cc;font-size:12px">Sem cartas disponíveis para esta rodada.</div>';}
+function renderBattle(){if(!battle)return;/* Restaura a arena e mantém o tema próprio da Torre quando ativo. */const arena=document.querySelector("#battleView .arena-panel");if(arena)arena.style.display="";const duel=document.querySelector("#battleView .duel-cards");if(duel)duel.style.display="";const terrain=document.querySelector("#battleView .mystery-terrain");if(terrain)terrain.style.display="";const badge=document.getElementById("terrainBadge");if(badge)badge.style.display="";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";const prompt=document.getElementById("battlePrompt");if(prompt)prompt.style.display="";const rr=document.getElementById("roundResult");if(rr){rr.classList.remove("final-result","final-win","final-loss","final-draw");rr.style.display="none";}const t=terrains[Math.floor(Math.random()*terrains.length)];battle.terrain=t;document.getElementById("roundTitle").textContent=`${battle.round}/5`;document.getElementById("terrainBadge").textContent="🎲 TERRENO SORTEADO AUTOMATICAMENTE";document.getElementById("terrainName").textContent="Terreno misterioso";document.getElementById("terrainText").textContent="O terreno será revelado quando você batalhar.";document.getElementById("terrainIcon").textContent="🎲";document.getElementById("playerScore").textContent=battle.playerScore;document.getElementById("enemyScore").textContent=battle.enemyScore;renderDuelCard("playerDuelCard",null,true);renderDuelCard("enemyDuelCard",null,true);const grid=document.getElementById("battleCards");grid.innerHTML="";const available=battle.hands.filter(c=>!battle.used.includes(c.id));available.forEach(c=>{const b=document.createElement("div");b.className="hand-card";b.innerHTML=`<span class="hand-art">${artMarkup(c)}</span><span class="hand-name"></span><span class="hand-force">⚡ ${c.force}</span><button type="button" class="hand-play">JOGAR CARTA</button>`;b.querySelector(".hand-name").textContent=c.name;const play=b.querySelector(".hand-play");play.disabled=!!battle.played;play.addEventListener("click",()=>playRound(c));b.addEventListener("click",e=>{if(e.target===b||e.target.classList.contains("hand-art")||e.target.closest(".hand-art")||e.target.classList.contains("hand-name"))showBattleCardInfo(c)});grid.appendChild(b)});if(!available.length)grid.innerHTML='<div style="grid-column:1/-1;color:#aab7cc;font-size:12px">Sem cartas disponíveis para esta rodada.</div>';}
 
 function showBattleCardInfo(card){
  const overlay=document.getElementById("cardPreviewOverlay"),dialog=document.getElementById("cardPreviewDialog");
@@ -1356,7 +1424,7 @@ function playRound(card){
  let result;if(playerAdvantage&&!enemyAdvantage)result="vitória";else if(enemyAdvantage&&!playerAdvantage)result="derrota";else if(pf>ef)result="vitória";else if(ef>pf)result="derrota";else result="empate";
  if(result==="vitória")battle.playerScore++;else if(result==="derrota")battle.enemyScore++;
  battle.results.push({card:card.name,enemy:enemy.name,result,playerForce:pf,enemyForce:ef,playerBaseForce:Number(card.force)||0,enemyBaseForce:Number(enemy.force)||0,playerElement,enemyElement,playerAdvantage,enemyAdvantage,terrain:t.name});recordEventRound(card,result);
- document.getElementById("playerScore").textContent=battle.playerScore;document.getElementById("enemyScore").textContent=battle.enemyScore;renderDuelCard("playerDuelCard",null,true);renderDuelCard("enemyDuelCard",null,true);setTimeout(()=>{renderDuelCard("playerDuelCard",card);renderDuelCard("enemyDuelCard",enemy);["playerDuelCard","enemyDuelCard"].forEach(id=>{const el=document.getElementById(id);el.classList.add("reveal-flip");});},950);
+ renderDuelCard("playerDuelCard",null,true);renderDuelCard("enemyDuelCard",null,true);setTimeout(()=>{renderDuelCard("playerDuelCard",card);renderDuelCard("enemyDuelCard",enemy);["playerDuelCard","enemyDuelCard"].forEach(id=>{const el=document.getElementById(id);el.classList.add("reveal-flip");});document.getElementById("playerScore").textContent=battle?battle.playerScore:0;document.getElementById("enemyScore").textContent=battle?battle.enemyScore:0;},950);
  // Microanimações apenas no modo de batalha normal. A Torre permanece intacta.
  if(!towerMode){
   const arena=document.querySelector("#battleView .arena-panel");
@@ -1442,7 +1510,7 @@ function finishBattle(){
   if(wasTowerBattle){towerResultForUi=false;renderTower();startTowerFight();}
   else{const arena=document.querySelector("#battleView .arena-panel");if(arena)arena.style.display="";const duel=document.querySelector("#battleView .duel-cards");if(duel)duel.style.display="";const terrain=document.querySelector("#battleView .mystery-terrain");if(terrain)terrain.style.display="";const badge=document.getElementById("terrainBadge");if(badge)badge.style.display="";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="none";const prompt=document.getElementById("battlePrompt");prompt.style.display="";prompt.textContent="Escolha novamente seus 5 personagens para a próxima partida.";document.getElementById("roundResult").classList.remove("final-result","final-win","final-loss","final-draw");document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";document.getElementById("battleIntro").style.display="block";document.getElementById("roundTitle").textContent="1/5";document.getElementById("playerScore").textContent="0";document.getElementById("enemyScore").textContent="0";renderDuelCard("playerDuelCard",null,true);renderDuelCard("enemyDuelCard",null,true);restoreBattleSelectionUI();}
  });
- document.getElementById("finalHome").addEventListener("click",()=>{towerMode=false;towerResultForUi=false;showView("home");});
+ document.getElementById("finalHome").addEventListener("click",()=>{towerMode=false;towerResultForUi=false;document.getElementById("battleView").classList.remove("tower-battle-mode");const normalArenaHeading=document.querySelector("#battleView .arena-heading");if(normalArenaHeading)normalArenaHeading.textContent="⚔️ ARENA ELEMENTAL";showView("home");});
  document.getElementById("nextRound").style.display="none";
  battle=null;renderMissions();renderTower();renderProfile();updateStats();
 }
@@ -1598,7 +1666,7 @@ async function asyncDuelCheck(code,role){const data=await asyncDuelRPC('async_du
 async function showFriendsDuel(){const params=new URLSearchParams(location.search),incoming=(params.get('desafio')||'').toUpperCase();asyncDuelSelected=[];try{await asyncDuelClientReady();if(incoming){const info=await asyncDuelRPC('async_duel_get',{p_code:incoming});if(info.status==='finished'){asyncDuelRole=info.player_role;asyncDuelRenderStatus(info,info.player_role);return}if(info.player_role==='host'){asyncDuelRole='host';asyncDuelRenderStatus(info,'host');return}if(info.status==='expired')throw new Error('Este convite expirou. Peça ao amigo para criar outro.');if(info.player_role==='guest')throw new Error('Você já respondeu a este convite.');if(info.status!=='waiting')throw new Error('Este desafio não está disponível.');asyncDuelRole='guest';asyncDuelRenderSelect('guest',incoming,info.expires_at)}else{asyncDuelRole='host';asyncDuelRenderSelect('host',null,null)}}catch(e){const root=asyncDuelOverlay();root.innerHTML=`<div style="max-width:600px;margin:35px auto;padding:20px;background:#1b1728;border:1px solid #6b557e;border-radius:20px"><h2>⚠️ Não foi possível abrir o desafio</h2><p>${escapeAttr(e?.message||String(e))}</p><button id="asyncDuelErrClose" style="padding:12px 18px;background:#e24d70;color:#fff;border:0;border-radius:10px">Fechar</button></div>`;root.querySelector('#asyncDuelErrClose').onclick=()=>root.remove()}}
 if(new URLSearchParams(location.search).has('desafio'))setTimeout(()=>showFriendsDuel(),250);
 
-document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>{const p=b.dataset.page;if(p==="collection")showView("collectionView");else if(p==="library"){showView("libraryView");renderLibrary()}else if(p==="shop"){showView("shopView");renderShopCarousel()}else if(p==="Eventos"){showView("eventsView");renderEvents()}else if(p==="Missões"){showView("missionsView");renderMissions()}else if(p==="Torre"){showView("towerView");renderTower()}else if(p==="Perfil"){showView("profileView");renderProfile()}else if(p==="Amigos"){showFriendsDuel()}else if(p==="Batalhar"){towerResultForUi=false;towerMode=false;showView("battleView");battle=null;const arenaPanel=document.querySelector("#battleView .arena-panel");if(arenaPanel)arenaPanel.style.display="";document.getElementById("battleView").classList.add("deck-building");const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";document.getElementById("battleIntro").style.display="block";document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";document.getElementById("battlePrompt").textContent="Monte sua equipe de 5 personagens para começar.";document.getElementById("battleCards").innerHTML="";document.getElementById("playerScore").textContent="0";document.getElementById("enemyScore").textContent="0";document.getElementById("roundTitle").textContent="1/5";restoreBattleSelectionUI()}else{const messages={Eventos:"Eventos e recompensas serão implementados em uma próxima etapa.",Missões:"Missões e recompensas serão implementadas em uma próxima etapa.",Torre:"Você está no andar 01. A Torre será implementada em uma próxima etapa.",Batalhar:"A tela de batalha será conectada em uma próxima etapa."};showModal(p,messages[p]||"Em desenvolvimento.")}}));
+document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>{const p=b.dataset.page;if(p==="collection")showView("collectionView");else if(p==="library"){showView("libraryView");renderLibrary()}else if(p==="shop"){showView("shopView");renderShopCarousel()}else if(p==="Eventos"){showView("eventsView");renderEvents()}else if(p==="Missões"){showView("missionsView");renderMissions()}else if(p==="Torre"){showView("towerView");renderTower()}else if(p==="Perfil"){showView("profileView");renderProfile()}else if(p==="Amigos"){showFriendsDuel()}else if(p==="Batalhar"){towerResultForUi=false;towerMode=false;document.getElementById("battleView").classList.remove("tower-battle-mode");const normalArenaHeading=document.querySelector("#battleView .arena-heading");if(normalArenaHeading)normalArenaHeading.textContent="⚔️ ARENA ELEMENTAL";showView("battleView");battle=null;const arenaPanel=document.querySelector("#battleView .arena-panel");if(arenaPanel)arenaPanel.style.display="";document.getElementById("battleView").classList.add("deck-building");const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";document.getElementById("battleIntro").style.display="block";document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";document.getElementById("battlePrompt").textContent="Monte sua equipe de 5 personagens para começar.";document.getElementById("battleCards").innerHTML="";document.getElementById("playerScore").textContent="0";document.getElementById("enemyScore").textContent="0";document.getElementById("roundTitle").textContent="1/5";restoreBattleSelectionUI()}else{const messages={Eventos:"Eventos e recompensas serão implementados em uma próxima etapa.",Missões:"Missões e recompensas serão implementadas em uma próxima etapa.",Torre:"Você está no andar 01. A Torre será implementada em uma próxima etapa.",Batalhar:"A tela de batalha será conectada em uma próxima etapa."};showModal(p,messages[p]||"Em desenvolvimento.")}}));
 // Delegação robusta de eventos para os botões da apresentação da Torre, inclusive em navegadores móveis com arquivos locais.
 document.addEventListener("click",function(e){
  const go=e.target.closest("#towerRevealGo");
