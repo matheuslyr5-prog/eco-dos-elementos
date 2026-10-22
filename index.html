@@ -788,7 +788,159 @@ body { min-height:100%; height:auto !important; overflow-x:hidden; transform:non
   background:linear-gradient(145deg,#202228,#111216) !important;
 }
 
-</style></head><body><canvas id="ambientParticles" aria-hidden="true" style="display:none!important"></canvas><main class="app">
+</style>
+<style id="eco-arena-purple-gold-refresh">
+/* Arena visual refresh: CSS only. No gameplay, Supabase, or tower logic changed. */
+#battleView .battle-shell{background:radial-gradient(ellipse at 50% 5%,#432568 0%,#21152f 48%,#100d1c 100%);border:1px solid #8e69c8;border-radius:28px;box-shadow:0 0 34px #9b6aff18,inset 0 0 35px #b58aff0c}
+#battleView .score-player{border-color:#a57bdf;background:linear-gradient(135deg,#38204f,#1b1730);box-shadow:inset 0 0 18px #bd8cff12}
+#battleView .score-player.enemy{border-color:#d9a94c;background:linear-gradient(135deg,#4b3420,#21172c)}
+#battleView .avatar{border-color:#d8b2ff;background:radial-gradient(circle at 35% 25%,#7d55b0,#211531);box-shadow:0 0 18px #b68aff26}
+#battleView .enemy .avatar{border-color:#ffd36d;background:radial-gradient(circle at 35% 25%,#9b692c,#2b1a25)}
+#battleView .round-chip{border-color:#e5bd60;background:linear-gradient(155deg,#68471f,#28172e);box-shadow:0 0 22px #e8bd5520}
+#battleView .arena-panel{position:relative;overflow:hidden;border:1px solid #a17ad3;background:radial-gradient(ellipse at 50% 0%,#59377b 0%,#30203f 44%,#171123 100%);box-shadow:inset 0 0 36px #c28cff12,0 12px 30px #08061170}
+#battleView .arena-panel:before{content:"";position:absolute;inset:8px;border:1px solid #d9b76c38;border-radius:19px;pointer-events:none}
+#battleView .arena-heading{color:#f2dcff;text-shadow:0 0 14px #bd8aff60}
+#battleView .terrain-pill{position:relative;border-color:#c59b50;background:linear-gradient(90deg,#281b39,#493052);color:#ffe7a2;box-shadow:0 0 14px #d6a94c15}
+#battleView .duel-card{height:clamp(215px,30vw,320px);border:2px solid #bc8df3;background:radial-gradient(circle at 50% 30%,#68469a,#29203e 62%,#151020);box-shadow:0 0 24px #a66bff20,inset 0 0 24px #cda8ff12;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease}
+#battleView .duel-card.enemy-card{border-color:#e6bb63;background:radial-gradient(circle at 50% 30%,#80552f,#392333 62%,#171020);box-shadow:0 0 24px #e6bb6318,inset 0 0 24px #ffd98b0c}
+#battleView .duel-art{filter:drop-shadow(0 0 16px #d5b0ff55);font-size:clamp(42px,10vw,76px)}
+#battleView .duel-name{color:#fff3d4;font-size:clamp(12px,2vw,17px)}
+#battleView .vs-mark{color:#ffe08a;text-shadow:0 0 15px #ffcb4f66}
+#battleView .mystery-terrain{border-color:#76578e;background:linear-gradient(100deg,#21162f,#30213b)}
+#battleView .terrain-die{border:1px solid #9871be;background:radial-gradient(circle,#624181,#21152f);box-shadow:0 0 16px #b58aff18}
+#battleView .battle-prompt{color:#ffe5a0;text-shadow:0 0 16px #d9a94c30}
+#battleView .battle-start{border:1px solid #f0ce78;background:linear-gradient(100deg,#7650a6,#4a2e6b 55%,#8c642c);box-shadow:0 8px 22px #08061155;color:#fff8e9;transition:transform .18s ease,filter .18s ease}
+#battleView .battle-start:not(:disabled):active{transform:scale(.985);filter:brightness(1.14)}
+#battleView .hand-panel{border-color:#76578e;background:linear-gradient(145deg,#21172f,#12101f);box-shadow:inset 0 0 24px #b58aff0b}
+#battleView .hand-head h3{color:#f2dcff}
+#battleView .hand-card{border-color:#6e568b;background:linear-gradient(155deg,#3c2a54,#191426);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+#battleView .hand-card .hand-force{color:#ffe08a}
+#battleView .hand-play{border-color:#a17ac8;background:linear-gradient(100deg,#553879,#38234e);color:#fff5dc}
+#battleView .hand-card.selected{outline:2px solid #ffdc75;box-shadow:0 0 16px #f4cb5c35;transform:translateY(-3px)}
+#battleView .battle-result{border-color:#a17ac8;background:linear-gradient(145deg,#2c1d3c,#171222)}
+@media(max-width:620px){#battleView .scoreboard{grid-template-columns:minmax(0,1fr) 66px minmax(0,1fr);gap:5px;margin:12px 0 20px}#battleView .score-player{min-height:78px;padding:8px 5px;border-radius:18px;gap:5px}#battleView .avatar{width:34px;height:34px;flex-basis:34px;font-size:18px}#battleView .round-chip{min-height:78px;border-radius:18px;padding:6px}#battleView .duel-card{height:clamp(190px,58vw,260px);padding:7px;border-radius:19px}#battleView .arena-panel{padding:12px 9px}#battleView .hand-panel{padding:9px;border-radius:18px}#battleView .battle-hand{gap:4px}#battleView .hand-card{padding:6px 2px;border-radius:10px}#battleView .hand-card .hand-art{font-size:clamp(20px,6vw,30px)}#battleView .hand-card .hand-name{font-size:clamp(8px,2.4vw,10px)}#battleView .hand-play{font-size:8px;padding:6px 1px}}
+@media(prefers-reduced-motion:reduce){#battleView .duel-card,#battleView .hand-card,#battleView .battle-start{transition:none}}
+</style>
+
+
+<style id="eco-arena-monochrome-compact-v2">
+/* ECO DOS ELEMENTOS: arena grafite, perolado e dourado */
+#battleView{--arena-gold:#d8b65b;--arena-gold-light:#f6df98;--arena-ink:#17191c;--arena-gray:#292c30;--arena-line:#8b8d90;color:#f4f0e6}
+#battleView .battle-shell{color:#f4f0e6}
+#battleView .score-player,#battleView .round-chip,#battleView .arena-panel,#battleView .hand-panel,#battleView .mystery-terrain,#battleView .battle-result{background:linear-gradient(145deg,#303236,#17191c 72%,#242629)!important;border-color:var(--arena-gold)!important;box-shadow:inset 0 0 0 1px #ffffff0c,0 6px 18px #0004}
+#battleView .score-player,#battleView .round-chip{border-radius:18px!important}
+#battleView .score-label,#battleView .arena-heading,#battleView .round-chip small{color:#eee6d2!important}
+#battleView .score-num,#battleView .round-chip strong,#battleView .vs-mark,#battleView .battle-prompt,#battleView .hand-card .hand-force{color:var(--arena-gold-light)!important}
+#battleView .terrain-pill{background:linear-gradient(135deg,#303236,#17191c)!important;border-color:var(--arena-gold)!important;color:#f4e7bd!important}
+#battleView .duel-card{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 48%,#fffdf7 0%,#f0e9d9 62%,#d6c7a5 100%)!important;border:4px solid var(--arena-gold)!important;box-shadow:inset 0 0 0 3px #fff8df,inset 0 0 0 7px #b38b32,0 5px 0 #72551c,0 8px 18px #0007!important;color:#77591c!important}
+#battleView .duel-card:before{content:"✦   ✧   ✦\A\A     ◇\A\A   ✧   ✦   ✧";white-space:pre;position:absolute;inset:12px;border:1px solid #c6a44e;border-radius:15px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:2.2;color:#b58b2e;font-size:clamp(12px,3vw,23px);pointer-events:none;background:linear-gradient(45deg,transparent 48%,#c9a94a16 49%,transparent 50%),linear-gradient(-45deg,transparent 48%,#c9a94a16 49%,transparent 50%)}
+#battleView .duel-card:after{content:"✦";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:68px;height:68px;border:1px solid #c5a24b;border-radius:50%;display:grid;place-items:center;font-size:42px;color:#b68d31;text-shadow:0 1px #fff;box-shadow:0 0 0 8px #c5a24b10}
+#battleView .duel-card>*{position:relative;z-index:1}
+#battleView .duel-card .duel-art,#battleView .duel-card .duel-name,#battleView .duel-card .duel-meta{display:none}
+#battleView .duel-card.enemy-card{border-color:var(--arena-gold)!important;background:radial-gradient(ellipse at 50% 48%,#fffdf7 0%,#f0e9d9 62%,#d6c7a5 100%)!important}
+#battleView .mystery-terrain{border-color:#777a7e!important}
+#battleView .terrain-die{background:linear-gradient(145deg,#414449,#202226)!important;border:1px solid #9b9da0}
+#battleView .mystery-terrain strong{color:#f3dfaa!important}
+#battleView .mystery-terrain p,#battleView .hand-head span{color:#c6c7c9!important}
+#battleView .hand-card{background:linear-gradient(155deg,#3a3d41,#202226)!important;border-color:#777a7e!important;border-radius:12px!important}
+#battleView .hand-play{background:linear-gradient(135deg,#55595f,#303338)!important;border-color:var(--arena-gold)!important;color:#fff!important}
+#battleView .hand-card.selected{outline-color:var(--arena-gold-light)!important}
+#battleView .battle-result{color:#f4f0e6}
+#battleView .battle-shell .back{background:#292c30!important;border-color:var(--arena-gold)!important}
+/* Altura compacta: em celulares comuns, arena e mão cabem sem rolagem */
+@media(max-width:600px){
+ #battleView .scoreboard{grid-template-columns:minmax(0,1fr) 66px minmax(0,1fr)!important;gap:4px!important;margin:4px 0 7px!important}
+ #battleView .score-player{min-height:48px!important;padding:4px!important;gap:4px!important;border-radius:13px!important}
+ #battleView .avatar{width:27px!important;height:27px!important;flex-basis:27px!important;font-size:15px!important}
+ #battleView .score-label{font-size:9px!important}
+ #battleView .score-num{font-size:21px!important}
+ #battleView .round-chip{min-height:48px!important;padding:3px!important;border-radius:13px!important}
+ #battleView .round-chip small{font-size:8px!important}
+ #battleView .round-chip strong{font-size:21px!important}
+ #battleView .arena-panel{padding:9px 8px!important;border-radius:19px!important}
+ #battleView .arena-heading{font-size:12px!important;margin:0 0 7px!important}
+ #battleView .terrain-pill{font-size:8px!important;padding:6px 9px!important;margin-bottom:8px!important}
+ #battleView .duel-cards{grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr)!important;gap:3px!important}
+ #battleView .duel-side h3{font-size:10px!important;margin:0 0 5px!important}
+ #battleView .duel-card{height:clamp(112px,24vh,190px)!important;min-height:112px;padding:4px!important;border-width:3px!important;border-radius:17px!important}
+ #battleView .duel-card:before{inset:6px;border-radius:10px;font-size:13px;line-height:1.8}
+ #battleView .duel-card:after{width:43px;height:43px;font-size:27px;box-shadow:0 0 0 5px #c5a24b10}
+ #battleView .vs-mark{font-size:15px!important}
+ #battleView .mystery-terrain{margin-top:8px!important;padding:7px!important;border-radius:14px!important;gap:7px!important}
+ #battleView .terrain-die{width:34px!important;height:34px!important;flex-basis:34px!important;font-size:20px!important;border-radius:10px!important}
+ #battleView .mystery-terrain strong{font-size:11px!important}
+ #battleView .mystery-terrain p{font-size:9px!important;margin-top:2px!important}
+ #battleView .battle-prompt{font-size:12px!important;line-height:1.25!important;margin:8px 0!important}
+ #battleView .battle-start{font-size:14px!important;padding:9px!important;border-radius:12px!important}
+ #battleView .hand-panel{margin-top:8px!important;padding:8px!important;border-radius:17px!important}
+ #battleView .hand-head{margin-bottom:6px!important}
+ #battleView .hand-head h3{font-size:14px!important}
+ #battleView .hand-head span{font-size:8px!important}
+ #battleView .battle-hand{gap:4px!important}
+ #battleView .hand-card{padding:5px 2px!important;gap:3px!important;border-radius:9px!important}
+ #battleView .hand-card .hand-art{font-size:20px!important}
+ #battleView .hand-card .hand-name{font-size:8px!important;line-height:1.1!important}
+ #battleView .hand-card .hand-force{font-size:9px!important}
+ #battleView .hand-play{font-size:8px!important;padding:5px 1px!important;border-radius:7px!important}
+ #battleView .battle-foot{font-size:8px!important;margin:6px 0 0!important}
+}
+/* Telas curtas: reduzir mais o duelo sem esconder botões */
+@media(max-width:600px) and (max-height:760px){
+ #battleView .duel-card{height:clamp(92px,19vh,145px)!important;min-height:92px!important}
+ #battleView .terrain-pill{margin-bottom:5px!important;padding:5px 8px!important}
+ #battleView .mystery-terrain{margin-top:5px!important;padding:5px!important}
+ #battleView .battle-prompt{margin:5px 0!important;font-size:11px!important}
+ #battleView .hand-panel{margin-top:5px!important;padding:6px!important}
+ #battleView .hand-card{padding:4px 1px!important}
+ #battleView .hand-card .hand-art{font-size:17px!important}
+ #battleView .hand-play{font-size:7px!important;padding:4px 0!important}
+}
+/* Ajuste fino após o teste visual: cartas maiores, resultado mais enxuto; rolagem só quando necessária. */
+#battleView .duel-card{height:clamp(210px,32vh,300px)!important;min-height:200px!important}
+#battleView .battle-result{padding:10px 12px!important;margin-top:9px!important}
+#battleView .battle-result h3{font-size:clamp(17px,4.5vw,24px)!important;margin:0 0 5px!important}
+#battleView .battle-result p{font-size:clamp(12px,3.2vw,16px)!important;line-height:1.35!important;margin:5px 0!important}
+#battleView #nextRound{padding:12px!important;margin-top:8px!important}
+@media(max-width:600px){
+ #battleView .duel-card{height:clamp(205px,29vh,260px)!important;min-height:195px!important}
+ #battleView .duel-card:after{width:56px!important;height:56px!important;font-size:34px!important}
+ #battleView .duel-card:before{font-size:clamp(12px,3.3vw,17px)!important;line-height:2!important}
+ #battleView .duel-cards{grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr)!important;gap:5px!important}
+ #battleView .vs-mark{font-size:19px!important}
+ #battleView .battle-result{padding:9px 10px!important}
+ #battleView .battle-result h3{font-size:18px!important}
+ #battleView .battle-result p{font-size:12px!important;line-height:1.3!important}
+ #battleView #nextRound{font-size:14px!important;padding:11px 8px!important}
+}
+/* Em telas realmente baixas, preservar o tamanho das cartas e permitir rolagem curta no resultado. */
+@media(max-width:600px) and (max-height:760px){
+ #battleView .duel-card{height:clamp(190px,27vh,225px)!important;min-height:185px!important}
+ #battleView .terrain-pill{margin-bottom:6px!important;padding:6px 8px!important}
+ #battleView .mystery-terrain{margin-top:6px!important;padding:6px!important}
+ #battleView .battle-result{padding:8px!important}
+ #battleView .battle-result p{margin:4px 0!important}
+}
+@media(prefers-reduced-motion:reduce){#battleView *{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* PALETA FINAL: grafite e cinza no lugar do roxo, mantendo o dourado e as cartas peroladas */
+#battleView .arena-panel{background:radial-gradient(ellipse at 50% 42%,#45484b 0,#292c2f 52%,#17191b 100%)!important;border-color:#b99a4a!important}
+#battleView .battle-shell,#battleView .hand-panel,#battleView .battle-result,#battleView .battle-select-panel{background-color:#202326!important;border-color:#777b80!important;color:#f2f0e9}
+#battleView .terrain-pill{background:linear-gradient(135deg,#303336,#17191b)!important;border-color:#c4a653!important;color:#f1e2b2!important}
+#battleView .duel-card{background:linear-gradient(145deg,#f5f0df,#e3dbc3 58%,#fffaf0)!important;border-color:#d4b45a!important;box-shadow:0 0 0 3px #8c6b27,0 5px 0 #5b461e!important;color:#262626!important}
+#battleView .duel-card.enemy-card{background:linear-gradient(145deg,#f5f0df,#e3dbc3 58%,#fffaf0)!important;border-color:#d4b45a!important}
+#battleView .mystery-terrain{background:linear-gradient(135deg,#303336,#1c1e20)!important;border-color:#8b8e91!important}
+#battleView .terrain-die{background:linear-gradient(145deg,#42464a,#25282b)!important;border-color:#a6a8a9!important}
+#battleView .hand-card{background:linear-gradient(155deg,#45494d,#24272a)!important;border-color:#85898d!important}
+#battleView .hand-play{background:linear-gradient(135deg,#4b4f53,#292c30)!important;border-color:#c3a34f!important;color:#fff!important}
+#battleView .battle-start,#battleView #nextRound{background:linear-gradient(100deg,#b38b2e,#f1d47a 48%,#9b7424)!important;border-color:#f0d37b!important;color:#fff!important}
+#battleView .battle-result{border-color:#b99a4a!important;background:linear-gradient(145deg,#2b2e31,#1b1d1f)!important}
+#battleView .battle-result h3,#battleView .battle-result strong,#battleView .battle-prompt{color:#f1d98b!important}
+#battleView .battle-foot{color:#aeb1b4!important}
+#battleView .score-player,#battleView .round-chip{background:linear-gradient(145deg,#303336,#17191b)!important;border-color:#b99a4a!important}
+#battleView .back{background:#303438!important;border-color:#777d82!important;color:#f4f4f4!important}
+@media(prefers-reduced-motion:reduce){#battleView *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head><body><canvas id="ambientParticles" aria-hidden="true" style="display:none!important"></canvas><main class="app">
 <header class="topbar"><div class="emblem">🛡️</div><div class="brand"><h1>ECO DOS ELEMENTOS</h1><p>DOMINE OS ELEMENTOS</p></div><div class="emblem">⚔️</div><button type="button" class="sound-toggle" id="soundToggle" aria-pressed="true" aria-label="Desligar efeitos sonoros">🔊 Sons: ligados</button></header>
 <div class="stats"><div class="pill">🪙 Moedas: <strong id="coins">4000</strong></div><div class="pill">⭐ Nível: <strong>01</strong></div><div class="pill">🃏 Cartas: <strong id="cardCount">5</strong>/100</div></div>
 <section class="view active" id="home">
