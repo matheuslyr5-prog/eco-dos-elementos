@@ -788,6 +788,21 @@ body { min-height:100%; height:auto !important; overflow-x:hidden; transform:non
   background:linear-gradient(145deg,#202228,#111216) !important;
 }
 
+
+/* Janela de revelação das cartas recebidas na Torre Elemental */
+.tower-reward-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,5,12,.84);backdrop-filter:blur(8px)}
+.tower-reward-dialog{width:min(560px,100%);max-height:90dvh;overflow:auto;border:1px solid #c8a85f;border-radius:24px;padding:22px 16px;background:radial-gradient(ellipse at top,#34264b 0%,#171421 58%,#101018 100%);color:#f7f3ff;box-shadow:0 20px 70px #000b;text-align:center}
+.tower-reward-dialog .reward-crown{font-size:42px;line-height:1.2}
+.tower-reward-dialog h2{margin:8px 0;color:#f4d98c;font-size:25px}
+.tower-reward-dialog p{margin:0 0 16px;color:#d1c7df;font-size:14px}
+.tower-reward-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 20px}
+.tower-reward-card{min-width:0;padding:8px;border:1px solid #66517f;border-radius:14px;background:#ffffff0a;overflow:hidden}
+.tower-reward-card .reward-art{width:100%;aspect-ratio:3/4.1;display:flex;align-items:center;justify-content:center;border:2px solid #c7a75e;border-radius:9px;overflow:hidden;background:#161321;font-size:40px}
+.tower-reward-card .reward-art img{width:100%;height:100%;object-fit:cover}
+.tower-reward-card strong{display:block;margin-top:8px;font-size:13px;overflow-wrap:anywhere}
+.tower-reward-card small{display:block;margin-top:4px;color:#d8c68e;font-size:11px}
+.tower-reward-dialog button{width:100%;min-height:48px;border:0;border-radius:12px;background:linear-gradient(100deg,#f0d88d,#c5a45a);color:#20182b;font-weight:900;font-size:15px}
+@media(max-width:360px){.tower-reward-dialog{padding:17px 10px}.tower-reward-cards{gap:6px}.tower-reward-card{padding:5px}.tower-reward-card strong{font-size:11px}}
 </style>
 <style id="eco-arena-purple-gold-refresh">
 /* Arena visual refresh: CSS only. No gameplay, Supabase, or tower logic changed. */
@@ -1651,6 +1666,19 @@ function playRound(card){
  document.getElementById("nextRound").style.display="none";const resolvedRound=battle.round;setTimeout(()=>{if(!battle)return;document.getElementById("battlePrompt").textContent=result==="vitória"?"✨ Você venceu esta rodada!":result==="derrota"?"💥 O rival venceu esta rodada!":"🤝 Rodada empatada!";rr.style.display="block";if(resolvedRound===5){document.getElementById("nextRound").style.display="none";document.getElementById("battlePrompt").textContent="As cinco rodadas terminaram. Preparando o resultado final…";setTimeout(()=>{if(battle&&battle.round===5&&battle.played)finishBattle();},1400);}else{document.getElementById("nextRound").style.display="block";document.getElementById("nextRound").textContent="PRÓXIMA RODADA →";}},2150);document.querySelectorAll(".hand-card").forEach(b=>b.disabled=true);
 }
 function nextRound(){if(!battle)return;if(battle.round>=5){finishBattle();return}battle.round++;battle.played=false;document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";document.getElementById("battlePrompt").textContent="Escolha uma criatura na sua mão para começar.";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";renderBattle()}
+function showTowerRewardCards(cards,floor){
+ if(!Array.isArray(cards)||!cards.length)return;
+ document.getElementById("towerRewardReveal")?.remove();
+ const overlay=document.createElement("div");overlay.id="towerRewardReveal";overlay.className="tower-reward-overlay";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-labelledby","towerRewardTitle");
+ const dialog=document.createElement("div");dialog.className="tower-reward-dialog";
+ const crown=document.createElement("div");crown.className="reward-crown";crown.textContent="🎁";dialog.appendChild(crown);
+ const title=document.createElement("h2");title.id="towerRewardTitle";title.textContent="SUAS CARTAS NOVAS!";dialog.appendChild(title);
+ const subtitle=document.createElement("p");subtitle.textContent=`Marco do andar ${String(floor).padStart(2,"0")} concluído. Estas são as 3 criaturas adicionadas à sua coleção.`;dialog.appendChild(subtitle);
+ const grid=document.createElement("div");grid.className="tower-reward-cards";
+ cards.forEach(card=>{const item=document.createElement("div");item.className="tower-reward-card";const art=document.createElement("div");art.className="reward-art";if(card.imageUrl){const img=document.createElement("img");img.src=card.imageUrl;img.alt=card.name||"Carta recebida";img.loading="eager";img.onerror=()=>{img.remove();art.textContent=card.art||"🃏"};art.appendChild(img)}else{art.textContent=card.art||"🃏"}const name=document.createElement("strong");name.textContent=card.name||"Criatura";const meta=document.createElement("small");meta.textContent=`${card.element||"Elemento"} · FORÇA ${Number(card.force)||10}`;item.append(art,name,meta);grid.appendChild(item)});
+ dialog.appendChild(grid);const note=document.createElement("p");note.textContent="As cartas já foram adicionadas à sua coleção.";dialog.appendChild(note);const close=document.createElement("button");close.type="button";close.textContent="CONTINUAR";close.addEventListener("click",()=>overlay.remove());dialog.appendChild(close);overlay.appendChild(dialog);overlay.addEventListener("click",e=>{if(e.target===overlay)overlay.remove()});document.addEventListener("keydown",function esc(e){if(e.key==="Escape"&&document.getElementById("towerRewardReveal")){overlay.remove();document.removeEventListener("keydown",esc)}});document.body.appendChild(overlay);close.focus();
+}
+
 function finishBattle(){
  if(!battle)return;
  if(!battle._historyRecorded){battle._historyRecorded=true;state.battleHistory=Array.isArray(state.battleHistory)?state.battleHistory:[];state.battleHistory.unshift({date:new Date().toLocaleString("pt-BR"),result:battle.playerScore>battle.enemyScore?"vitória":battle.playerScore<battle.enemyScore?"derrota":"empate",playerScore:battle.playerScore,enemyScore:battle.enemyScore,reward:0,rounds:(battle.results||[]).map(r=>({result:r.result,card:r.card,enemy:r.enemy,playerForce:r.playerForce,enemyForce:r.enemyForce,terrain:r.terrain||""})),tower:!!towerMode});state.battleHistory=state.battleHistory.slice(0,50);}
@@ -1658,7 +1686,7 @@ function finishBattle(){
  const p=battle.playerScore,e=battle.enemyScore;
  const wasTowerBattle=!!towerMode;
  const floorBefore=state.towerFloor||1;
- let result,reward,streakBonus=0,towerBonus=0,bossReward=null,milestoneReward=null;
+ let result,reward,streakBonus=0,towerBonus=0,bossReward=null,milestoneReward=null;const milestoneCardsReceived=[];
  if(p>e){
   result="vitória";state.wins++;
   // Economia mais lenta: vitória normal vale 15 moedas; sequência acrescenta 2 por vitória anterior, limitado a +6.
@@ -1685,7 +1713,7 @@ function finishBattle(){
    const milestone=towerMilestoneInfo(floor);
    if(milestone){
     if(milestone.exclusive){state.coins+=100;const specialDef=towerExclusiveCreatures[(Math.floor(floor/50)-1)%towerExclusiveCreatures.length];const special={id:nextId++,name:specialDef.name,element:specialDef.element,art:"👑",imageUrl:specialDef.imageUrl,ability:specialDef.ability,description:specialDef.description,rarity:"Único",stage:3,force:90,towerExclusive:true,exclusiveSource:"Torre",towerMilestone:floor};state.cards.push(special);milestoneReward={title:`Criatura exclusiva do andar ${floor}`,coins:100,cards:1,exclusiveName:special.name,imageUrl:specialDef.imageUrl,element:specialDef.element,ability:specialDef.ability};}
-    else if(floor===5){state.coins+=50;milestoneReward={title:"Marco do andar 05",coins:50,cards:3};for(let i=0;i<3;i++){const d=starterDefs[Math.floor(Math.random()*starterDefs.length)];state.cards.push(hydrateCloudCard({id:nextId++,name:d[0],element:d[1],art:d[2],ability:d[3],description:"Recompensa do marco da Torre Elemental.",rarity:"Comum",stage:1,force:10}));}}
+    else if(floor===5){state.coins+=50;milestoneReward={title:"Marco do andar 05",coins:50,cards:3};for(let i=0;i<3;i++){const d=starterDefs[Math.floor(Math.random()*starterDefs.length)];const awarded=hydrateCloudCard({id:nextId++,name:d[0],element:d[1],art:d[2],ability:d[3],description:"Recompensa do marco da Torre Elemental.",rarity:"Comum",stage:1,force:10});state.cards.push(awarded);milestoneCardsReceived.push(awarded);}}
     else if(boss){milestoneReward={title:`Chefe do andar ${floor}`,coins:40,cards:10};}
    }
    if(boss){
@@ -1724,6 +1752,7 @@ function finishBattle(){
   if(wasTowerBattle){towerResultForUi=false;renderTower();startTowerFight();}
   else{const arena=document.querySelector("#battleView .arena-panel");if(arena)arena.style.display="";const duel=document.querySelector("#battleView .duel-cards");if(duel)duel.style.display="";const terrain=document.querySelector("#battleView .mystery-terrain");if(terrain)terrain.style.display="";const badge=document.getElementById("terrainBadge");if(badge)badge.style.display="";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="none";const prompt=document.getElementById("battlePrompt");prompt.style.display="";prompt.textContent="Escolha novamente seus 5 personagens para a próxima partida.";document.getElementById("roundResult").classList.remove("final-result","final-win","final-loss","final-draw");document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";document.getElementById("battleIntro").style.display="block";document.getElementById("roundTitle").textContent="1/5";document.getElementById("playerScore").textContent="0";document.getElementById("enemyScore").textContent="0";renderDuelCard("playerDuelCard",null,true);renderDuelCard("enemyDuelCard",null,true);restoreBattleSelectionUI();}
  });
+ if(wasTowerBattle&&result==="vitória"&&floorBefore===5&&milestoneCardsReceived.length){setTimeout(()=>showTowerRewardCards(milestoneCardsReceived,floorBefore),450);}
  document.getElementById("finalHome").addEventListener("click",()=>{towerMode=false;towerResultForUi=false;document.getElementById("battleView").classList.remove("tower-battle-mode");const normalArenaHeading=document.querySelector("#battleView .arena-heading");if(normalArenaHeading)normalArenaHeading.textContent="⚔️ ARENA ELEMENTAL";showView("home");});
  document.getElementById("nextRound").style.display="none";
  battle=null;renderMissions();renderTower();renderProfile();updateStats();
