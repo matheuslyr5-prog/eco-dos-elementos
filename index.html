@@ -1284,34 +1284,35 @@ function renderPackReveal(){const box=document.getElementById("packRevealCard"),
 function revealNextPackCard(){if(packRevealIndex<packRevealCards.length){packRevealIndex++;renderPackReveal();}else{document.getElementById("packOpeningBg").classList.remove("open");}}
 function revealAllPackCards(){packRevealIndex=packRevealCards.length;renderPackReveal();}
 function getCarouselCards(){
- // Compra avulsa: somente criaturas Comuns de estágio 1.
- const available=shopCatalog.filter(def=>Number(def[4])===1);
- const day=Math.floor(Date.now()/86400000);
- const start=(day*5)%available.length;
+ // Prioriza criaturas ativas do Admin: somente Comuns de estágio 1 para compra avulsa.
+ const cloud=cloudShopPool("Comum",1).map(c=>({cloudCreature:c,name:c.nome,element:c.elemento,art:"🃏",ability:c.habilidade_nome||"",stage:1,force:Number(c.forca??10),imageUrl:c.imageUrl||""}));
+ const base=shopCatalog.filter(def=>Number(def[4])===1&&!cloud.some(c=>normCreatureName(c.name)===normCreatureName(def[0])));
+ const available=cloud.length?cloud:base;
+ if(!available.length)return [];
+ const day=Math.floor(Date.now()/86400000),start=(day*5)%available.length;
  return Array.from({length:Math.min(5,available.length)},(_,i)=>available[(start+i)%available.length]);
 }
 function renderShopCarousel(){
  const track=document.getElementById("shopCarousel");if(!track)return;track.innerHTML="";
  getCarouselCards().forEach(def=>{
-  const owned=state.cards.filter(c=>c.name===def[0]).length;
-  const rarityPrices={Comum:50,Rara:50,Épica:100,Lendária:200,Mítica:350};
-  const rarity="Comum";
-  const price=rarityPrices[rarity];
+  const isCloud=!Array.isArray(def),name=isCloud?def.name:def[0],element=isCloud?def.element:def[1],stage=isCloud?def.stage:def[4],art=isCloud?def.art:def[2];
+  const cloud=isCloud?(def.cloudCreature||def):(state.cloudCreatures?.[normCreatureName(def[0])]||Object.values(state.cloudCreatures||{}).find(c=>normCreatureName(c.nome)===normCreatureName(def[0])));
+  const owned=state.cards.filter(c=>normCreatureName(c.name)===normCreatureName(name)).length;
+  const price=50,rarity="Comum";
   const card=document.createElement("article");card.className="shop-card";
-  const cloud=state.cloudCreatures?.[String(def[0]).trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR")] || Object.values(state.cloudCreatures||{}).find(c=>String(c.nome||"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR")===String(def[0]).trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR"));
-  card.innerHTML=`<div class="shop-art">${artMarkup({name:def[0],art:def[2],imageUrl:cloud?.imageUrl||def.imageUrl||""})}</div><div class="shop-card-name"></div><small>${def[1]} · Estágio ${def[4]}</small><small>Você possui: ${owned}</small><div class="price">🪙 ${price}</div><button class="buy">COMPRAR CÓPIA</button>`;
-  card.querySelector(".shop-card-name").textContent=def[0];
+  card.innerHTML=`<div class="shop-art">${artMarkup({name,art,imageUrl:cloud?.imageUrl||def.imageUrl||""})}</div><div class="shop-card-name"></div><small>${element} · Estágio ${stage}</small><small>Você possui: ${owned}</small><div class="price">🪙 ${price}</div><button class="buy">COMPRAR CÓPIA</button>`;
+  card.querySelector(".shop-card-name").textContent=name;
   card.querySelector("button").disabled=state.coins<price||state.cards.length>=200;
   card.querySelector("button").addEventListener("click",()=>buySingleCard(def,rarity,price));
   track.appendChild(card);
  });
- const note=document.getElementById("carouselNote");if(note)note.textContent="O carrossel muda diariamente. As cartas avulsas continuam Comuns de Estágio 1. O Pacote Premium de 500 moedas sorteia 1 carta Rara entre as criaturas ativas cadastradas no Admin e sincronizadas do Supabase. Limite da coleção: 200 cartas.";
+ const note=document.getElementById("carouselNote");if(note)note.textContent="O carrossel muda diariamente. As cartas avulsas continuam Comuns de Estágio 1. Os pacotes mantêm seus preços e regras, priorizando criaturas ativas do Admin quando disponíveis. Limite da coleção: 200 cartas.";
  updateStats();updateHomeDashboard();
 }
 function buySingleCard(def,rarity,price){
  if(state.coins<price){showModal("Moedas insuficientes","Você precisa de mais moedas para comprar esta carta.","🪙");return}
  if(state.cards.length>=200){showModal("Coleção cheia","Sua coleção chegou ao limite de 200 cartas.","🃏");return}
- state.coins-=price;const card=addShopCard(def,rarity);state.cards.push(card);save();renderShopCarousel();showModal("Carta comprada!",`Você recebeu ${card.name} Comum. Agora possui ${state.cards.filter(c=>c.name===card.name).length} cópia(s) desta criatura.`,card.art);
+ state.coins-=price;const card=Array.isArray(def)?addShopCard(def,rarity):addCloudShopCard(def.cloudCreature||def);card.rarity=rarity;card.stage=1;if(def.cloudCreature){card.force=Number(def.cloudCreature.forca??card.force);card.imageUrl=def.cloudCreature.imageUrl||card.imageUrl;card.ability=def.cloudCreature.habilidade_nome||card.ability;card.description=def.cloudCreature.habilidade_descricao||card.description}state.cards.push(card);save();renderShopCarousel();showModal("Carta comprada!",`Você recebeu ${card.name} Comum. Agora possui ${state.cards.filter(c=>normCreatureName(c.name)===normCreatureName(card.name)).length} cópia(s) desta criatura.`,card.art);
 }
 document.querySelectorAll("[data-pack]").forEach(btn=>btn.addEventListener("click",()=>buyPack(btn.dataset.pack)));
 document.getElementById("carouselPrev")?.addEventListener("click",()=>document.getElementById("shopCarousel")?.scrollBy({left:-220,behavior:"smooth"}));
@@ -1743,7 +1744,7 @@ function finishBattle(){
    const milestone=towerMilestoneInfo(floor);
    if(milestone){
     if(milestone.exclusive){state.coins+=100;const specialDef=towerExclusiveCreatures[(Math.floor(floor/50)-1)%towerExclusiveCreatures.length];const special={id:nextId++,name:specialDef.name,element:specialDef.element,art:"👑",imageUrl:specialDef.imageUrl,ability:specialDef.ability,description:specialDef.description,rarity:"Único",stage:3,force:90,towerExclusive:true,exclusiveSource:"Torre",towerMilestone:floor};state.cards.push(special);milestoneCardsReceived.push(special);milestoneReward={title:`Criatura exclusiva do andar ${floor}`,coins:100,cards:1,exclusiveName:special.name,imageUrl:specialDef.imageUrl,element:specialDef.element,ability:specialDef.ability};}
-    else if(floor===5){state.coins+=50;milestoneReward={title:"Marco do andar 05",coins:50,cards:3};for(let i=0;i<3;i++){const d=starterDefs[Math.floor(Math.random()*starterDefs.length)];const awarded=hydrateCloudCard({id:nextId++,name:d[0],element:d[1],art:d[2],ability:d[3],description:"Recompensa do marco da Torre Elemental.",rarity:"Comum",stage:1,force:10});state.cards.push(awarded);milestoneCardsReceived.push(awarded);}}
+    else if(floor===5){state.coins+=50;milestoneReward={title:"Marco do andar 05",coins:50,cards:3};for(let i=0;i<3;i++){const pool=cloudShopPool("Comum",1),d=pool.length?pool[Math.floor(Math.random()*pool.length)]:null;const awarded=d?addCloudShopCard({...d,rarity:"Comum",estagio:1}):(()=>{const x=starterDefs[Math.floor(Math.random()*starterDefs.length)];return hydrateCloudCard({id:nextId++,name:x[0],element:x[1],art:x[2],ability:x[3],description:"Recompensa do marco da Torre Elemental.",rarity:"Comum",stage:1,force:10})})();state.cards.push(awarded);milestoneCardsReceived.push(awarded);}}
     else if(boss){milestoneReward={title:`Chefe do andar ${floor}`,coins:40,cards:10};}
    }
    if(boss){
@@ -1831,7 +1832,7 @@ function claimDailyReward(){const today=localDateKey();if(state.dailyClaimDate==
 let missionFilter="all";
 function dailyQuestState(){const today=localDateKey();if(!state.dailyQuestData||state.dailyQuestData.date!==today)state.dailyQuestData={date:today,matches:0,wins:0,elements:[]};return state.dailyQuestData}
 function renderDailyQuests(){const data=dailyQuestState(),list=document.getElementById("dailyQuestList");if(!list)return;const defs=[{id:"matches",icon:"⚔️",title:"Entre na arena",desc:"Complete 3 partidas em qualquer modo.",value:Math.min(3,data.matches||0),target:3},{id:"wins",icon:"🏆",title:"Vitórias do dia",desc:"Vença 2 partidas em qualquer modo.",value:Math.min(2,data.wins||0),target:2},{id:"elements",icon:"🌈",title:"Poder dos elementos",desc:"Use criaturas de 3 elementos diferentes em partidas concluídas.",value:Math.min(3,(data.elements||[]).length),target:3}];const done=defs.filter(q=>q.value>=q.target).length;list.innerHTML="";defs.forEach(q=>{const complete=q.value>=q.target,el=document.createElement("article");el.className="daily-quest"+(complete?" done":"");el.innerHTML=`<div class="quest-icon">${complete?"✅":q.icon}</div><div><h4>${q.title}</h4><p>${q.desc}</p><div class="quest-mini"><span style="width:${Math.round(q.value/q.target*100)}%"></span></div></div><div class="quest-count">${q.value}/${q.target} ${complete?"• Concluída":""}</div>`;list.appendChild(el)});const bar=document.getElementById("dailyQuestOverallBar");if(bar)bar.style.width=(done/3*100)+"%";const text=document.getElementById("dailyQuestOverallText");if(text)text.textContent=`${done} / 3 missões concluídas`;const btn=document.getElementById("claimDailyPack");if(btn){const claimed=state.dailyQuestData.packClaimed===true;btn.disabled=done<3||claimed;btn.textContent=claimed?"✅ PACOTE COMUM RESGATADO HOJE":done===3?"🎁 RESGATAR PACOTE COMUM":"🎁 COMPLETE AS 3 MISSÕES"}}
-function claimDailyPack(){const data=dailyQuestState();if(data.packClaimed||data.matches<3||data.wins<2||(data.elements||[]).length<3)return;if(state.cards.length+1>200){showModal("Coleção cheia","Libere pelo menos 1 espaço na coleção para resgatar o Pacote Comum.");return}const def=starterDefs[Math.floor(Math.random()*starterDefs.length)];state.cards.push(hydrateCloudCard({id:nextId++,name:def[0],element:def[1],art:def[2],ability:def[3],description:"Recompensa do pacote comum das missões diárias.",rarity:"Comum",stage:1,force:10}));state.cardsEarnedFromMissions=(state.cardsEarnedFromMissions||0)+1;data.packClaimed=true;save();renderMissions();showModal("Pacote Comum resgatado!","Parabéns! Você completou as três missões diárias e ganhou 1 carta Comum aleatória.","🎁")}
+function claimDailyPack(){const data=dailyQuestState();if(data.packClaimed||data.matches<3||data.wins<2||(data.elements||[]).length<3)return;if(state.cards.length+1>200){showModal("Coleção cheia","Libere pelo menos 1 espaço na coleção para resgatar o Pacote Comum.");return}const cloudPool=cloudShopPool("Comum",1),def=cloudPool.length?cloudPool[Math.floor(Math.random()*cloudPool.length)]:null,localDef=def?null:starterDefs[Math.floor(Math.random()*starterDefs.length)];state.cards.push(def?addCloudShopCard({...def,rarity:"Comum",estagio:1}):hydrateCloudCard({id:nextId++,name:localDef[0],element:localDef[1],art:localDef[2],ability:localDef[3],description:"Recompensa do pacote comum das missões diárias.",rarity:"Comum",stage:1,force:10}));state.cardsEarnedFromMissions=(state.cardsEarnedFromMissions||0)+1;data.packClaimed=true;save();renderMissions();showModal("Pacote Comum resgatado!","Parabéns! Você completou as três missões diárias e ganhou 1 carta Comum aleatória.","🎁")}
 document.getElementById("claimDailyPack")?.addEventListener("click",claimDailyPack);
 function renderMissions(){
  renderDailyRewards();renderDailyQuests();
@@ -1996,7 +1997,12 @@ document.addEventListener("click",function(e){
 const starterPackGrantedKey=storageKey+"_starterPackGranted_v2";
 function safeStarterStorageGet(key){try{return localStorage.getItem(key)}catch(e){return null}}
 function safeStarterStorageSet(key,value){try{localStorage.setItem(key,value);return true}catch(e){console.warn("Não foi possível persistir o resgate neste navegador.",e);return false}}
-function starterCardPool(){return shopCatalog.filter(def=>Number(def[4])===1)}
+function starterCardPool(){
+ const cloud=cloudShopPool("Comum",1).map(c=>({cloudCreature:c,name:c.nome,element:c.elemento,art:"🃏",ability:c.habilidade_nome||"",description:c.habilidade_descricao||"",stage:1,force:Number(c.forca??10),imageUrl:c.imageUrl||""}));
+ if(cloud.length>=5)return cloud;
+ const fallback=shopCatalog.filter(def=>Number(def[4])===1&&!cloud.some(c=>normCreatureName(c.name)===normCreatureName(def[0])));
+ return [...cloud,...fallback];
+}
 function renderStarterReveal(){
  const grid=document.getElementById("starterRevealedGrid"),visual=document.getElementById("starterPackVisual"),title=document.getElementById("starterWelcomeTitle"),copy=document.getElementById("starterWelcomeText"),btn=document.getElementById("starterPackOpenButton"),note=document.getElementById("starterWelcomeNote");
  if(!grid||!Array.isArray(state.starterPackCardIds))return;
@@ -2011,7 +2017,7 @@ function openStarterPack(){
  const pool=starterCardPool();if(pool.length<5){showModal("Pacote indisponível","Não foi possível encontrar cinco cartas de Estágio 1 no catálogo.","🃏");return}
  const shuffled=pool.slice();for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]}
  const chosen=shuffled.slice(0,5);if(state.cards.length+5>200){showModal("Coleção cheia","Libere espaço para receber as cartas iniciais.","🃏");return}
- const received=chosen.map(def=>({...addShopCard(def,"Comum"),stage:1,force:forceFor(1,"Comum"),description:"Carta recebida no pacote inicial gratuito."}));state.cards.push(...received);state.starterPackClaimed=true;state.starterPackPending=false;state.starterPackWelcomeSeen=false;state.starterPackCardIds=received.map(c=>c.id);safeStarterStorageSet(starterPackGrantedKey,"done");save();renderStarterReveal();
+ const received=chosen.map(def=>{const c=Array.isArray(def)?addShopCard(def,"Comum"):addCloudShopCard(def.cloudCreature||def);return {...c,stage:1,force:Array.isArray(def)?c.force:Number((def.cloudCreature||def).forca??c.force),description:"Carta recebida no pacote inicial gratuito."}});state.cards.push(...received);state.starterPackClaimed=true;state.starterPackPending=false;state.starterPackWelcomeSeen=false;state.starterPackCardIds=received.map(c=>c.id);safeStarterStorageSet(starterPackGrantedKey,"done");save();renderStarterReveal();
 }
 function finishStarterWelcome(){state.starterPackPending=false;state.starterPackWelcomeSeen=true;save();document.getElementById("starterWelcomeOverlay")?.classList.remove("visible");showView("home")}
 function initStarterWelcome(){const overlay=document.getElementById("starterWelcomeOverlay"),btn=document.getElementById("starterPackOpenButton");if(!overlay||!btn)return;
