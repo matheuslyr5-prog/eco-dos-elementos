@@ -1959,14 +1959,27 @@ function renderLibrary(){
  const norm=v=>String(v??"").trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR");
  const rarityNames=["Comum","Rara","Épica","Lendária","Mítica"];
  const base=new Map();
- (Array.isArray(shopCatalog)?shopCatalog:[]).forEach(d=>{if(!d||!d[0])return;const k=norm(d[0])+"|"+norm(d[1])+"|"+Number(d[4]||1);if(!base.has(k))base.set(k,{name:d[0],element:d[1]||"",art:d[2]||"🃏",ability:d[3]||"",stage:Number(d[4]||1),force:Number(d[5]||0),imageUrl:d.imageUrl||""})});
- Object.values(state.cloudCreatures||{}).forEach(c=>{if(!c||c.ativa===false||!(c.nome||c.name))return;const name=c.nome||c.name,element=c.elemento||c.element||"",stage=Number(c.estagio||c.stage||1),k=norm(name)+"|"+norm(element)+"|"+stage;const prev=base.get(k)||{name,element,art:"🃏",ability:"",stage,force:10,imageUrl:""};base.set(k,{...prev,name,element,stage,art:prev.art||"🃏",imageUrl:c.imageUrl||prev.imageUrl||"",ability:c.habilidade_nome||prev.ability,description:c.habilidade_descricao||prev.description,force:Number(c.forca??prev.force??10),cloudRarity:c.raridade||""})});
- (state.cards||[]).forEach(c=>{if(!c||!c.name)return;const k=norm(c.name)+"|"+norm(c.element)+"|"+Number(c.stage||1);if(!base.has(k))base.set(k,{name:c.name,element:c.element||"",art:c.art||"🃏",ability:c.ability||"",stage:Number(c.stage||1),force:Number(c.force||0),imageUrl:c.imageUrl||""})});
- const catalog=[];base.forEach(def=>{const rarities=def.cloudRarity?[def.cloudRarity]:rarityNames;rarities.forEach(rarity=>catalog.push({...def,rarity,key:norm(def.name)+"|"+norm(def.element)+"|"+def.stage+"|"+norm(rarity)}))});
+ const keyOf=(name,element,stage,rarity)=>norm(name)+"|"+norm(element)+"|"+Number(stage||1)+"|"+norm(rarity||"Comum");
+ // A enciclopédia usa o catálogo ativo do Admin como fonte principal.
+ // Não gera combinações artificiais de raridades para cada criatura.
+ Object.values(state.cloudCreatures||{}).forEach(c=>{
+  if(!c||c.ativa===false||!(c.nome||c.name))return;
+  const name=c.nome||c.name,element=c.elemento||c.element||"",stage=Number(c.estagio||c.stage||1),rarity=rarityNames.find(r=>norm(r)===norm(c.raridade||c.rarity))||(c.raridade||c.rarity||"Comum");
+  const k=keyOf(name,element,stage,rarity);
+  base.set(k,{name,element,art:"🃏",ability:c.habilidade_nome||"",stage,force:Number(c.forca??10),imageUrl:c.imageUrl||"",rarity,cloudRarity:rarity});
+ });
+ // Mantém criaturas antigas que o jogador já possui, mas não inventa criaturas bloqueadas locais.
+ (state.cards||[]).forEach(c=>{
+  if(!c||!c.name)return;
+  const rarity=c.rarity||"Comum",k=keyOf(c.name,c.element,c.stage,rarity);
+  if(!base.has(k))base.set(k,{name:c.name,element:c.element||"",art:c.art||"🃏",ability:c.ability||"",stage:Number(c.stage||1),force:Number(c.force||0),imageUrl:c.imageUrl||"",rarity,cloudRarity:rarity});
+  else {const prev=base.get(k);base.set(k,{...prev,imageUrl:prev.imageUrl||c.imageUrl||"",force:Number(prev.force??c.force??0),art:prev.art||c.art||"🃏"});}
+ });
+ const catalog=[...base.values()].map(def=>({...def,key:keyOf(def.name,def.element,def.stage,def.rarity)}));
  const ownedCards=state.cards||[];const q=norm(document.getElementById("librarySearch")?.value||"");const el=document.getElementById("libraryElement")?.value||"Todos",rar=document.getElementById("libraryRarity")?.value||"Todas",st=document.getElementById("libraryStage")?.value||"Todos";
  const isOwned=def=>ownedCards.some(c=>norm(c.name)===norm(def.name)&&norm(c.element)===norm(def.element)&&Number(c.stage||1)===Number(def.stage)&&norm(c.rarity||"Comum")===norm(def.rarity));
- const filtered=catalog.filter(c=>(!q||norm(c.name).includes(q))&&(el==="Todos"||c.element===el)&&(rar==="Todas"||c.rarity===rar)&&(st==="Todos"||Number(c.stage)===Number(st)));
- const found=catalog.filter(isOwned).length,percent=catalog.length?Math.round(found/catalog.length*100):0;const count=document.getElementById("libraryCount");if(count)count.textContent=`${found} / ${catalog.length} cartas`;const fill=document.getElementById("libraryProgressFill");if(fill)fill.style.width=percent+"%";const textEl=document.getElementById("libraryProgressText");if(textEl)textEl.textContent=`${percent}% descoberto · ${ownedCards.length} cartas na coleção`;
+ const filtered=catalog.filter(c=>(!q||norm(c.name).includes(q))&&(el==="Todos"||c.element===el)&&(rar==="Todas"||norm(c.rarity)===norm(rar))&&(st==="Todos"||Number(c.stage)===Number(st)));
+ const found=catalog.filter(isOwned).length,percent=catalog.length?Math.round(found/catalog.length*100):0;const count=document.getElementById("libraryCount");if(count)count.textContent=`${found} / ${catalog.length} criaturas`;const fill=document.getElementById("libraryProgressFill");if(fill)fill.style.width=percent+"%";const textEl=document.getElementById("libraryProgressText");if(textEl)textEl.textContent=`${percent}% descoberto · ${ownedCards.length} cartas na coleção`;
  const rarityOrder={Comum:1,Rara:2,"Épica":3,"Lendária":4,"Mítica":5};filtered.sort((a,b)=>a.element.localeCompare(b.element,"pt-BR")||a.name.localeCompare(b.name,"pt-BR")||a.stage-b.stage||(rarityOrder[a.rarity]||0)-(rarityOrder[b.rarity]||0));grid.innerHTML="";
  filtered.forEach(c=>{const owned=isOwned(c),copies=ownedCards.filter(x=>norm(x.name)===norm(c.name)&&norm(x.element)===norm(c.element)&&Number(x.stage||1)===Number(c.stage)&&norm(x.rarity||"Comum")===norm(c.rarity)).length;const card=document.createElement("button");card.type="button";card.className="library-card "+(owned?"owned":"locked");card.setAttribute("aria-label",owned?`Ver ${c.name}`:"Criatura ainda não descoberta");const art=c.imageUrl?`<img src="${escapeAttr(c.imageUrl)}" alt="${escapeAttr(c.name)}" loading="lazy">`:escapeAttr(c.art||"🃏");card.innerHTML=`<span class="library-rarity">${escapeAttr(c.rarity)}</span>${owned?`<span class="library-owned-count">×${copies}</span>`:""}<div class="library-card-art">${art}</div><h4>${owned?escapeAttr(c.name):"???"}</h4><div class="library-meta">${owned?`${escapeAttr(c.element)}<br>⚡ ${Number(c.force||0)}`:"🔒 Descubra"}</div><span class="library-status">${owned?"✦ DESBLOQUEADA":"🔒 NÃO DESBLOQUEADA"}</span>`;card.addEventListener("click",()=>{if(owned)openCollectionCreatureDetails(c,copies);else showModal("CRIATURA NÃO DESCOBERTA","Esta criatura ainda não faz parte da sua coleção. Continue jogando e abrindo pacotes para tentar encontrá-la.","🔒")});grid.appendChild(card)});
  if(!filtered.length)grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:25px;color:#cbbddd;border:1px dashed #604a7c;border-radius:14px">Nenhuma carta encontrada com esses filtros.</div>';
