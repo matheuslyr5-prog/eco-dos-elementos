@@ -812,6 +812,9 @@ body { min-height:100%; height:auto !important; overflow-x:hidden; transform:non
 #battleView .duel-card:not(.face-down).enemy-card{
   background:transparent!important;
 }
+
+/* Ajuste final da Arena: remove apenas a moldura externa do contêiner da carta revelada. A arte original da carta permanece intacta. */
+#battleView .duel-card:has(.duel-art img){border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;padding:0!important;}
 </style>
 <style id="eco-arena-purple-gold-refresh">
 /* Arena visual refresh: CSS only. No gameplay, Supabase, or tower logic changed. */
@@ -1047,6 +1050,24 @@ body { min-height:100%; height:auto !important; overflow-x:hidden; transform:non
 }
 </style>
 
+<style id="eco-arena-round-result-style">
+/* Resultado visual de cada rodada, inspirado na referência enviada. */
+#battleView .arena-panel{position:relative;isolation:isolate;overflow:hidden}
+#battleView .round-result-banner{display:flex;align-items:center;justify-content:center;gap:clamp(5px,2vw,18px);min-height:clamp(105px,23vw,190px);margin:12px -2px 10px;padding:12px 5px;border:2px solid currentColor;border-radius:16px;position:relative;overflow:hidden;text-align:center;background:linear-gradient(180deg,#100d18d9,#090a13ed);box-shadow:inset 0 0 28px currentColor,0 8px 24px #0008}
+#battleView .round-result-banner:before,#battleView .round-result-banner:after{content:"✦";position:absolute;top:8px;font-size:20px;color:currentColor;text-shadow:0 0 12px currentColor}
+#battleView .round-result-banner:before{left:12px}#battleView .round-result-banner:after{right:12px}
+#battleView .round-result-banner h2{font-size:clamp(30px,8.5vw,70px);line-height:1;margin:0;font-weight:1000;letter-spacing:clamp(1px,.5vw,5px);text-shadow:0 3px 0 #0008,0 0 22px currentColor;overflow-wrap:anywhere}
+#battleView .round-result-icon{font-size:clamp(22px,5vw,40px);line-height:1;text-shadow:0 0 15px currentColor}
+#battleView .round-result-ornament{font-size:clamp(22px,5vw,42px);line-height:1;transform:rotate(-25deg);opacity:.95;text-shadow:0 0 12px currentColor}
+#battleView #roundResult.round-win .round-result-banner{color:#7dff70;border-color:#6cff68;background:radial-gradient(ellipse at center,#075b19d9,#07120ded 72%);box-shadow:inset 0 0 30px #27ff3a44,0 0 20px #28ff3a24}
+#battleView #roundResult.round-loss .round-result-banner{color:#ff6670;border-color:#ff5967;background:radial-gradient(ellipse at center,#6d0716e8,#16070ced 72%);box-shadow:inset 0 0 30px #ff263b44,0 0 20px #ff263b24}
+#battleView #roundResult.round-draw .round-result-banner{color:#ffe45e;border-color:#ffdf4e;background:radial-gradient(ellipse at center,#68500be8,#171006ed 72%);box-shadow:inset 0 0 30px #ffe45e44,0 0 20px #ffe45e24}
+#battleView .round-result-details{padding:9px 12px;border:1px solid #ffffff25;border-radius:12px;background:#0b0c15d9}
+#battleView .round-result-details p{font-size:11px;line-height:1.45;margin:0;color:#e5e4ed}
+#battleView #nextRound{min-height:58px;border:1px solid #ffe59a;border-radius:14px;background:linear-gradient(100deg,#d69b2d,#ffe17a,#c88b21);color:#382507;font-size:clamp(15px,4vw,21px);font-weight:1000;letter-spacing:1px;box-shadow:0 5px 0 #81551a,0 9px 22px #0005}
+#battleView #nextRound:active{transform:translateY(2px);box-shadow:0 3px 0 #81551a}
+@media(max-width:390px){#battleView .round-result-banner{min-height:104px;border-radius:13px;margin-top:9px}#battleView .round-result-banner h2{font-size:clamp(28px,8vw,38px)}#battleView .round-result-ornament{font-size:22px}#battleView .round-result-details{padding:8px}#battleView .round-result-details p{font-size:10px}}
+</style>
 </head><body><canvas id="ambientParticles" aria-hidden="true" style="display:none!important"></canvas><main class="app">
 <header class="topbar"><div class="emblem">🛡️</div><div class="brand"><h1>ECO DOS ELEMENTOS</h1><p>DOMINE OS ELEMENTOS</p></div><div class="emblem">⚔️</div><button type="button" class="sound-toggle" id="soundToggle" aria-pressed="true" aria-label="Desligar efeitos sonoros">🔊 Sons: ligados</button></header>
 <div class="stats"><div class="pill">🪙 Moedas: <strong id="coins">4000</strong></div><div class="pill">⭐ Nível: <strong>01</strong></div><div class="pill">🃏 Cartas: <strong id="cardCount">5</strong>/100</div></div>
@@ -1592,7 +1613,10 @@ function restoreBattleSelectionUI(){
  document.getElementById("battleDeckElement").addEventListener("change",renderBattleSelection);
  selectedBattleIds=[];document.getElementById("battleView").classList.add("deck-building");renderBattleSelection();
 }
-function battleStackKey(c){return [c.name,c.element,c.rarity,c.stage,c.force].join("|")}
+function battleStackKey(c){
+ const norm=v=>String(v??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/\s+/g," ").toLocaleLowerCase("pt-BR");
+ return [norm(c.name),norm(c.element),norm(c.rarity),Number(c.stage)||1,Number(c.force)||0].join("|");
+}
 function renderBattleSelection(){
  const grid=document.getElementById("battlePickGrid");if(!grid)return;
  selectedBattleIds=selectedBattleIds.filter(id=>state.cards.some(c=>c.id===id));grid.innerHTML="";
@@ -1693,7 +1717,7 @@ function playRound(card){
   if(arena){arena.classList.remove("battle-win","battle-loss","battle-draw");arena.classList.add(result==="vitória"?"battle-win":result==="derrota"?"battle-loss":"battle-draw");}
  }
  document.getElementById("battlePrompt").textContent="✨ Revelando as cartas...";
- const rr=document.getElementById("roundResult");rr.style.display="none";rr.innerHTML=`<h3>⚔️ Resultado da rodada</h3><p><strong>Sua FORÇA final: ${pf}</strong> (${Number(card.force)||0} base${playerTerrainForce!==(Number(card.force)||0)?`, terreno ${playerTerrainForce>(Number(card.force)||0)?"+":""}${playerTerrainForce-(Number(card.force)||0)}`:""}${playerAdvantage?", vantagem elemental +5":""})<br><strong>FORÇA final do rival: ${ef}</strong> (${Number(enemy.force)||0} base${enemyTerrainForce!==(Number(enemy.force)||0)?`, terreno ${enemyTerrainForce>(Number(enemy.force)||0)?"+":""}${enemyTerrainForce-(Number(enemy.force)||0)}`:""}${enemyAdvantage?", vantagem elemental +5":""})</p><p><strong>${result==="vitória"?"✅ Você venceu a rodada!":result==="derrota"?"❌ O rival venceu a rodada.":"🤝 Rodada empatada."}</strong></p>`;
+ const rr=document.getElementById("roundResult");rr.style.display="none";rr.classList.remove("round-win","round-loss","round-draw");rr.classList.add(result==="vitória"?"round-win":result==="derrota"?"round-loss":"round-draw");const outcomeTitle=result==="vitória"?"VITÓRIA":result==="derrota"?"DERROTA":"EMPATE";const outcomeIcon=result==="vitória"?"✦":result==="derrota"?"✦":"✦";rr.innerHTML=`<div class="round-result-banner"><span class="round-result-ornament">❧</span><div class="round-result-icon">${outcomeIcon}</div><h2>${outcomeTitle}</h2><span class="round-result-ornament">❧</span></div><div class="round-result-details"><p><strong>Sua FORÇA final: ${pf}</strong> (${Number(card.force)||0} base${playerTerrainForce!==(Number(card.force)||0)?`, terreno ${playerTerrainForce>(Number(card.force)||0)?"+":""}${playerTerrainForce-(Number(card.force)||0)}`:""}${playerAdvantage?", vantagem elemental +5":""})<br><strong>FORÇA final do rival: ${ef}</strong> (${Number(enemy.force)||0} base${enemyTerrainForce!==(Number(enemy.force)||0)?`, terreno ${enemyTerrainForce>(Number(enemy.force)||0)?"+":""}${enemyTerrainForce-(Number(enemy.force)||0)}`:""}${enemyAdvantage?", vantagem elemental +5":""})</p></div>`;
  document.getElementById("nextRound").style.display="none";const resolvedRound=battle.round;setTimeout(()=>{if(!battle)return;document.getElementById("battlePrompt").textContent=result==="vitória"?"✨ Você venceu esta rodada!":result==="derrota"?"💥 O rival venceu esta rodada!":"🤝 Rodada empatada!";rr.style.display="block";if(resolvedRound===5){document.getElementById("nextRound").style.display="none";document.getElementById("battlePrompt").textContent="As cinco rodadas terminaram. Preparando o resultado final…";setTimeout(()=>{if(battle&&battle.round===5&&battle.played)finishBattle();},1400);}else{document.getElementById("nextRound").style.display="block";document.getElementById("nextRound").textContent="PRÓXIMA RODADA →";}},2150);document.querySelectorAll(".hand-card").forEach(b=>b.disabled=true);
 }
 function nextRound(){if(!battle)return;if(battle.round>=5){finishBattle();return}battle.round++;battle.played=false;document.getElementById("roundResult").style.display="none";document.getElementById("nextRound").style.display="none";document.getElementById("battlePrompt").textContent="Escolha uma criatura na sua mão para começar.";const handPanel=document.getElementById("handPanel");if(handPanel)handPanel.style.display="block";renderBattle()}
